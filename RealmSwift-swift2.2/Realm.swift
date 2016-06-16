@@ -110,8 +110,15 @@ public final class Realm {
 
      - throws: An `NSError` if the transaction could not be completed successfully.
      */
-    public func write(@noescape block: (() -> Void)) throws {
-        try rlmRealm.transactionWithBlock(block)
+    public func write(@noescape block: (() throws -> Void)) throws {
+        beginWrite()
+        do {
+            try block()
+        } catch let error {
+            if inWriteTransaction { cancelWrite() }
+            throw error
+        }
+        if inWriteTransaction { try commitWrite() }
     }
 
     /**

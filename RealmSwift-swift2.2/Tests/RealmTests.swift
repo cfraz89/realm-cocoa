@@ -255,6 +255,29 @@ class RealmTests: TestCase {
         }
         XCTAssertEqual(try! Realm().objects(SwiftStringObject.self).count, 0)
     }
+    
+    func testThrowsWrite() {
+        enum TestError: ErrorType { case Exception }
+        
+        do {
+            try Realm().write {
+                throw TestError.Exception
+            }
+            XCTFail("Expected exception thrown in write block to be rethrown.")
+        }
+        catch TestError.Exception { }
+        catch let error { XCTFail("Unexpected expection type: \(error)") }
+        
+        do {
+            try Realm().write {
+                try! Realm().create(SwiftStringObject.self, value: ["1"])
+                throw TestError.Exception
+            }
+            XCTFail("Expected exception thrown in write block to be rethrown.")
+        }
+        catch TestError.Exception { }
+        catch let error { XCTFail("Unexpected expection type: \(error)") }
+    }
 
     func testInWriteTransaction() {
         let realm = try! Realm()
